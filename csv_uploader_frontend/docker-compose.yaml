@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+ react-app:
+ container_name: csv_uploader_react
+ restart: on-failure
+ build: .
+ volumes:
+      - ./src:/app/src
+ ports:
+      - "3000:3000"
+ command: >
+      sh -c "yarn start"
