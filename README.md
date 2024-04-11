@@ -27,7 +27,7 @@ pip install -r requirements.txt
 python manage.py runserver
 ```
 
-The API server will be available at `http://localhost:8000/`.
+The API server will be available at `http://127.0.0.1:8000/api/csv_uploader_api/`.
 
 Then launch the React client.
 

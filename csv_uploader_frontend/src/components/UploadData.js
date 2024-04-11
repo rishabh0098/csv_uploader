@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useRef } from "react";
-import { baseURL, headers } from "../services/backend.service";
+import { baseURL } from "../services/backend.service";
 import { usePapaParse } from 'react-papaparse';
 import { cityToState } from "./CityToState";
 
@@ -31,7 +31,7 @@ export const UploadData = () => {
                 middle_name = data[key]
             } else if(key.toUpperCase() === "LAST NAME") {
                 last_name = data[key]
-            } else if(key.toUpperCase() === "STATE") {
+            } else if(key.toUpperCase() === "STATE" || key.toUpperCase() === "LOCATION") {
                 state = cityToState[data[key]]
             } else if(key.toUpperCase() === "SCHOOL") {
                 school = data[key]
