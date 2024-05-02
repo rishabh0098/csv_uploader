@@ -38,13 +38,3 @@ yarn start
 ```
 
 The React client will be available at `http://localhost:3000/`. And you can upload csv files.
-
-Assignment Document - https://docs.google.com/document/d/1XXorO2ba7w6ZFpAgsfisbwPEvLZzwSUhVliuhk-g2W0/edit
-
-The database is modelled as mentioned in the document.
-
-#### Assumption
-Following assumptions we made while handling the CSV:
-1. A person can have first name, middle name, last name only.
-2. I have kept a City to State mapping in the code (CityToState.js) with few entries as of now, all the cities which part of the input CSV should be there for entries to be correctly populated in DB.
-3. Every column where a class is being mentioned should have the word "class" in it (case insensitive).
