@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  csv-uploader:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount data directory to persist SQLite database
+      - ./data:/app/data
+      # Mount sample data for easy testing
+      - ./sample_data.csv:/app/sample_data.csv:ro
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - csv-uploader-network
+
+networks:
+  csv-uploader-network:
+    driver: bridge

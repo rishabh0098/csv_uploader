@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Uploader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #0056b3;
+            background-color: #e9ecef;
+        }
+        .upload-area.dragover {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .data-table {
+            margin-top: 30px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center mb-4">
+                    <h1 class="display-4 text-primary">
+                        <i class="fas fa-file-csv"></i> CSV Uploader
+                    </h1>
+                    <p class="lead text-muted">Upload CSV files with student data and manage them in SQLite database</p>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-info-circle"></i> {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Upload Section -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-upload"></i> Upload CSV File
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                                    <div class="upload-area" id="uploadArea">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                        <h4>Drag & Drop your CSV file here</h4>
+                                        <p class="text-muted">or click to browse files</p>
+                                        <input type="file" id="fileInput" name="file" accept=".csv" class="d-none" required>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-outline-primary btn-custom" onclick="document.getElementById('fileInput').click()">
+                                                <i class="fas fa-folder-open"></i> Choose File
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-success btn-custom" id="uploadBtn" disabled>
+                                            <i class="fas fa-upload"></i> Upload File
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="mt-4">
+                                    <h6 class="text-muted">Expected CSV Format:</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Option 1:</strong> First Name, Middle Name, Last Name, State/Location, School, Class
+                                            </small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">
+                                                <strong>Option 2:</strong> Name, State/Location, School, Class
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                {% if students %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="stats-card">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <h3 class="mb-0">{{ students|length }}</h3>
+                                    <small>Total Records</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="mb-0">{{ students|selectattr('school')|list|length }}</h3>
+                                    <small>With School Info</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="mb-0">{{ students|selectattr('state_location')|list|length }}</h3>
+                                    <small>With Location</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="mb-0">{{ students|selectattr('class_name')|list|length }}</h3>
+                                    <small>With Class Info</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Data Display Section -->
+                {% if students %}
+                <div class="row data-table">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-table"></i> Uploaded Data
+                                </h5>
+                                <div>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="clearData()">
+                                        <i class="fas fa-trash"></i> Clear All Data
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="exportData()">
+                                        <i class="fas fa-download"></i> Export CSV
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Location</th>
+                                                <th>School</th>
+                                                <th>Class</th>
+                                                <th>Uploaded</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for student in students %}
+                                            <tr>
+                                                <td>{{ student.id }}</td>
+                                                <td>
+                                                    {% if student.full_name %}
+                                                        {{ student.full_name }}
+                                                    {% else %}
+                                                        {{ [student.first_name, student.middle_name, student.last_name]|select|join(' ') }}
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ student.state_location or '-' }}</td>
+                                                <td>{{ student.school or '-' }}</td>
+                                                <td>{{ student.class_name or '-' }}</td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ student.uploaded_at.split(' ')[0] if student.uploaded_at else '-' }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // File input change handler
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadArea.innerHTML = `
+                    <i class="fas fa-file-csv fa-3x text-success mb-3"></i>
+                    <h4>${file.name}</h4>
+                    <p class="text-muted">Ready to upload</p>
+                `;
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Click to upload
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Clear data function
+        function clearData() {
+            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/clear';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Export data function
+        function exportData() {
+            fetch('/api/students')
+                .then(response => response.json())
+                .then(data => {
+                    const csv = convertToCSV(data);
+                    downloadCSV(csv, 'exported_data.csv');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = ['ID', 'First Name', 'Middle Name', 'Last Name', 'Full Name', 'Location', 'School', 'Class', 'Uploaded At'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    row.id,
+                    `"${row.first_name || ''}"`,
+                    `"${row.middle_name || ''}"`,
+                    `"${row.last_name || ''}"`,
+                    `"${row.full_name || ''}"`,
+                    `"${row.state_location || ''}"`,
+                    `"${row.school || ''}"`,
+                    `"${row.class_name || ''}"`,
+                    `"${row.uploaded_at || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
